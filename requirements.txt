@@ -1,0 +1,8 @@
+azure-functions
+azure-functions-durable
+azure-ai-formrecognizer        # For Document Intelligence
+azure-storage-blob             # For Azure Blob Storage operations
+azure-identity                 # For authentication
+azure-cognitiveservices-speech # For Azure AI Speech
+openai                         # For Azure OpenAI
+python-dotenv                  # For managing environment variables
