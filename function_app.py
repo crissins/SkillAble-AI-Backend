@@ -7,7 +7,6 @@ from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
 from azure.storage.blob import BlobServiceClient
 import azure.cognitiveservices.speech as speechsdk
-import openai
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -138,15 +137,24 @@ def analyze_with_openai(blob: func.InputStream):
             for kv in data["key_value_pairs"]:
                 document_content += f"{kv['key']}: {kv['value']}\n"
         
-        # Call OpenAI to analyze the content
-        response = openai.ChatCompletion.create(
-            engine="gpt-4o-mini",  # Adjust as needed for your deployment
+        # Create OpenAI client with the new API (v1.0.0+)
+        from openai import AzureOpenAI
+        
+        client = AzureOpenAI(
+            api_key=os.environ["OPENAI_API_KEY"],
+            api_version=os.environ["OPENAI_API_VERSION"],
+            azure_endpoint=os.environ["OPENAI_API_ENDPOINT"]
+        )
+        
+        # Call OpenAI to analyze the content using the new API
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # Use deployment name here
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Analyze this document content:\n\n{document_content}"}
             ],
             temperature=0.3,
-            max_tokens=1000
+            max_tokens=4096
         )
         
         # Extract the response
