@@ -8,14 +8,13 @@ from azure.core.credentials import AzureKeyCredential
 from azure.storage.blob import BlobServiceClient
 import azure.cognitiveservices.speech as speechsdk
 import openai
-from dotenv import load_dotenv
-load_dotenv()
+from azure.functions import Blueprint
 
 # Initialize the Azure Function App
-app = func.FunctionApp()
+app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-# Initialize the Durable Functions Blueprint
-bp = func.Blueprint()
+# Initialize the Blueprint
+bp = Blueprint()
 
 # Storage connection string
 connection_string = os.environ["AzureWebJobsStorage"]
@@ -36,6 +35,7 @@ speech_key = os.environ["SPEECH_KEY"]
 speech_region = os.environ["SPEECH_REGION"]
 
 # Function 1: PDF Processing with Document Intelligence
+@app.function_name("ProcessPDF")
 @bp.blob_trigger(arg_name="blob", 
                 path="pdfs/{name}.pdf",
                 connection="AzureWebJobsStorage")
@@ -106,7 +106,8 @@ def process_pdf(blob: func.InputStream):
             os.remove(temp_file_path)
 
 # Function 2: Process JSON with Azure OpenAI
-@bp.blob_trigger(arg_name="blob", 
+@app.function_name("ProcessPDF")
+@bp.blob_trigger(arg_name="blob",
                 path="processed-data/{name}.json",
                 connection="AzureWebJobsStorage")
 def analyze_with_openai(blob: func.InputStream):
@@ -207,7 +208,8 @@ def analyze_with_openai(blob: func.InputStream):
         logging.error(f"Error processing with OpenAI: {str(e)}")
 
 # Function 3: Convert to Speech
-@bp.blob_trigger(arg_name="blob", 
+@app.function_name("ProcessPDF")
+@bp.blob_trigger(arg_name="blob",
                 path="gpt-data/{name}.json",
                 connection="AzureWebJobsStorage")
 def convert_to_speech(blob: func.InputStream):

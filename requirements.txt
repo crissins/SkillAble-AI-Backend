@@ -1,8 +1,9 @@
-azure-functions
+azure-functions>=1.12.0
 azure-functions-durable
 azure-ai-formrecognizer        # For Document Intelligence
-azure-storage-blob             # For Azure Blob Storage operations
+azure-storage-blob>=12.8.0     # For Azure Blob Storage operations
 azure-identity                 # For authentication
 azure-cognitiveservices-speech # For Azure AI Speech
 openai                         # For Azure OpenAI
 python-dotenv                  # For managing environment variables
+azure-functions-worker>=1.1.0
