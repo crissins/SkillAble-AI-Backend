@@ -1,0 +1,12 @@
+{
+    "scriptFile": "../function_app.py",
+    "bindings": [
+      {
+        "name": "blob",
+        "type": "blobTrigger",
+        "direction": "in",
+        "path": "pdfs/{name}.pdf",
+        "connection": "AzureWebJobsStorage"
+      }
+    ]
+  }

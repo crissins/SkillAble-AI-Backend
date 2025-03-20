@@ -8,37 +8,32 @@ from azure.core.credentials import AzureKeyCredential
 from azure.storage.blob import BlobServiceClient
 import azure.cognitiveservices.speech as speechsdk
 import openai
-from azure.functions import Blueprint
+from dotenv import load_dotenv
+load_dotenv()
 
 # Initialize the Azure Function App
-app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
+app = func.FunctionApp()
 
-# Initialize the Blueprint
-bp = Blueprint()
-
-# Storage connection string
+# Initialize settings
 connection_string = os.environ["AzureWebJobsStorage"]
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-# Document Intelligence (Form Recognizer) settings
 document_intelligence_endpoint = os.environ["DOCUMENT_INTELLIGENCE_ENDPOINT"]
 document_intelligence_key = os.environ["DOCUMENT_INTELLIGENCE_KEY"]
 
-# OpenAI settings
 openai.api_type = "azure"
 openai.api_base = os.environ["OPENAI_API_ENDPOINT"]
 openai.api_version = os.environ["OPENAI_API_VERSION"]
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# Speech settings
 speech_key = os.environ["SPEECH_KEY"]
 speech_region = os.environ["SPEECH_REGION"]
 
 # Function 1: PDF Processing with Document Intelligence
 @app.function_name("ProcessPDF")
-@bp.blob_trigger(arg_name="blob", 
-                path="pdfs/{name}.pdf",
-                connection="AzureWebJobsStorage")
+@app.blob_trigger(arg_name="blob", 
+                 path="pdfs/{name}.pdf",
+                 connection="AzureWebJobsStorage")
 def process_pdf(blob: func.InputStream):
     logging.info(f"Python blob trigger function processed blob: {blob.name}")
     
@@ -106,10 +101,10 @@ def process_pdf(blob: func.InputStream):
             os.remove(temp_file_path)
 
 # Function 2: Process JSON with Azure OpenAI
-@app.function_name("ProcessPDF")
-@bp.blob_trigger(arg_name="blob",
-                path="processed-data/{name}.json",
-                connection="AzureWebJobsStorage")
+@app.function_name("AnalyzeWithOpenAI")
+@app.blob_trigger(arg_name="blob", 
+                 path="processed-data/{name}.json",
+                 connection="AzureWebJobsStorage")
 def analyze_with_openai(blob: func.InputStream):
     logging.info(f"Processing JSON with OpenAI: {blob.name}")
     
@@ -208,10 +203,10 @@ def analyze_with_openai(blob: func.InputStream):
         logging.error(f"Error processing with OpenAI: {str(e)}")
 
 # Function 3: Convert to Speech
-@app.function_name("ProcessPDF")
-@bp.blob_trigger(arg_name="blob",
-                path="gpt-data/{name}.json",
-                connection="AzureWebJobsStorage")
+@app.function_name("ConvertToSpeech")
+@app.blob_trigger(arg_name="blob", 
+                 path="gpt-data/{name}.json",
+                 connection="AzureWebJobsStorage")
 def convert_to_speech(blob: func.InputStream):
     logging.info(f"Converting to speech: {blob.name}")
     
@@ -289,6 +284,3 @@ def create_container_if_not_exists(container_name):
             logging.info(f"Container '{container_name}' created")
     except Exception as e:
         logging.error(f"Error creating container {container_name}: {str(e)}")
-
-# Register the blueprint with the function app
-app.register_functions(bp)
