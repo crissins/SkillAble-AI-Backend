@@ -6,4 +6,5 @@ azure-identity                 # For authentication
 azure-cognitiveservices-speech # For Azure AI Speech
 openai                         # For Azure OpenAI
 python-dotenv                  # For managing environment variables
-azure-functions-worker>=1.1.0
+azure-functions-worker>=1.1.0     
+azure-communication-email # Azure Communication Services for notifications

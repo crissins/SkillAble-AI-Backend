@@ -1,0 +1,23 @@
+Collecting sendgrid
+  Downloading sendgrid-6.11.0-py3-none-any.whl.metadata (11 kB)
+Collecting python-http-client>=3.2.1 (from sendgrid)
+  Downloading python_http_client-3.3.7-py3-none-any.whl.metadata (6.9 kB)
+Collecting starkbank-ecdsa>=2.0.1 (from sendgrid)
+  Downloading starkbank-ecdsa-2.2.0.tar.gz (14 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Downloading sendgrid-6.11.0-py3-none-any.whl (101 kB)
+   ---------------------------------------- 101.9/101.9 kB 1.5 MB/s eta 0:00:00
+Downloading python_http_client-3.3.7-py3-none-any.whl (8.4 kB)
+Building wheels for collected packages: starkbank-ecdsa
+  Building wheel for starkbank-ecdsa (pyproject.toml): started
+  Building wheel for starkbank-ecdsa (pyproject.toml): finished with status 'done'
+  Created wheel for starkbank-ecdsa: filename=starkbank_ecdsa-2.2.0-py3-none-any.whl size=16086 sha256=dc9e69a0a29fdcae6575a3c779343805fbade1dd9cb2ddf0d9cd5a760cda93ba
+  Stored in directory: c:\users\crist\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local\pip\cache\wheels\af\6c\c8\3a941332ae93d4748d5b4107d70ed22b4e6ff6ac1e225c5c95
+Successfully built starkbank-ecdsa
+Installing collected packages: starkbank-ecdsa, python-http-client, sendgrid
+Successfully installed python-http-client-3.3.7 sendgrid-6.11.0 starkbank-ecdsa-2.2.0
