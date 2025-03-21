@@ -22,15 +22,9 @@ document_intelligence_endpoint = os.environ["DOCUMENT_INTELLIGENCE_ENDPOINT"]
 document_intelligence_key = os.environ["DOCUMENT_INTELLIGENCE_KEY"]
 
 # Initialize Azure OpenAI client with API Key Authentication
-api_key = os.environ["OPENAI_API_KEY"]  # Get your API key from environment variables or settings
-api_version = "2024-12-01-preview"
-azure_endpoint = "https://unitedcoachaih1164957527.cognitiveservices.azure.com" # Base endpoint without deployment
-
-openai_client = AzureOpenAI(
-    api_version=api_version,
-    azure_endpoint=azure_endpoint,
-    api_key=api_key,
-)
+api_key = os.environ["OPENAI_API_KEY"]
+api_version = os.environ["OPENAI_API_VERSION"]
+azure_endpoint = os.environ["OPENAI_API_ENDPOINT"].split("/openai")[0]  # Get base endpoint
 
 speech_key = os.environ["SPEECH_KEY"]
 speech_region = os.environ["SPEECH_REGION"]
@@ -82,6 +76,7 @@ def process_pdf(blob: func.InputStream):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
+# Function 2: Process text content with Azure OpenAI
 @app.function_name("AnalyzeWithOpenAI")
 @app.blob_trigger(arg_name="blob", 
                  path="processed-data/{name}.txt",
@@ -110,45 +105,46 @@ def analyze_with_openai(blob: func.InputStream):
         }
         """
         
-        # Use the proper API configuration for Azure OpenAI
+        # Use the API key from environment variables
         api_key = os.environ["OPENAI_API_KEY"]
-        api_version = "2025-01-01"
+        
+        # CRITICAL: For Azure OpenAI, the api_version is from your env file and must match deployment
+        api_version = "2025-01-01-preview"  # Match what's in your deployment info
+        
+        # Base endpoint without the deployment path
+        azure_endpoint = "https://united-coach-openai.openai.azure.com"
+        
+        # Deployment name that exactly matches your deployment
         deployment_name = "gpt-4o-mini"
         
-        # IMPORTANT: The endpoint needs to include the deployment and operation in Azure OpenAI
-        azure_endpoint = "https://unitedcoachaih1164957527.cognitiveservices.azure.com"
-
         # Log authentication details (securely)
         logging.info(f"Using API key prefix: {api_key[:5]}...")
         logging.info(f"Endpoint: {azure_endpoint}")
         logging.info(f"API Version: {api_version}")
         logging.info(f"Deployment: {deployment_name}")
-
-        # Initialize the Azure OpenAI client
-        client = AzureOpenAI(
-            api_version=api_version,
-            azure_endpoint=azure_endpoint,
-            api_key=api_key,
-        )
-
-        # Call OpenAI to analyze the content
-        logging.info(f"Sending request to OpenAI with model: {deployment}")
         
-        # Send content for analysis, limiting if necessary for testing
+        # Initialize Azure OpenAI client
+        client = AzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=azure_endpoint
+        )
+        
+        # Send content for analysis, limiting if necessary
         content_limit = 4000 if len(document_content) > 4000 else len(document_content)
         truncated_content = document_content[:content_limit]
         if content_limit < len(document_content):
             truncated_content += "...[content truncated for processing]"
         
-        # This is where the error occurs - the model parameter should match your deployment name
+        logging.info(f"Sending request to OpenAI with model: {deployment_name}")
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # This should match your deployment name exactly
+            model=deployment_name,  # Must match your deployment name exactly
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Analyze this document content:\n\n{truncated_content}"}
             ],
             temperature=0.3,
-            max_tokens=4096
+            max_tokens=1000
         )
         
         # Extract the response
