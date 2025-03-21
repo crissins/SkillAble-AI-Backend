@@ -7,6 +7,7 @@ from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
 from azure.storage.blob import BlobServiceClient
 import azure.cognitiveservices.speech as speechsdk
+from openai import AzureOpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,15 +21,21 @@ blob_service_client = BlobServiceClient.from_connection_string(connection_string
 document_intelligence_endpoint = os.environ["DOCUMENT_INTELLIGENCE_ENDPOINT"]
 document_intelligence_key = os.environ["DOCUMENT_INTELLIGENCE_KEY"]
 
-openai.api_type = "azure"
-openai.api_base = os.environ["OPENAI_API_ENDPOINT"]
-openai.api_version = os.environ["OPENAI_API_VERSION"]
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# Initialize Azure OpenAI client with API Key Authentication
+api_key = os.environ["OPENAI_API_KEY"]  # Get your API key from environment variables or settings
+api_version = "2024-12-01-preview"
+azure_endpoint = "https://unitedcoachaih1164957527.cognitiveservices.azure.com" # Base endpoint without deployment
+
+openai_client = AzureOpenAI(
+    api_version=api_version,
+    azure_endpoint=azure_endpoint,
+    api_key=api_key,
+)
 
 speech_key = os.environ["SPEECH_KEY"]
 speech_region = os.environ["SPEECH_REGION"]
 
-# Function 1: PDF Processing with Document Intelligence
+# Function 1: PDF Processing with Document Intelligence - SIMPLIFIED
 @app.function_name("ProcessPDF")
 @app.blob_trigger(arg_name="blob", 
                  path="pdfs/{name}.pdf",
@@ -52,35 +59,11 @@ def process_pdf(blob: func.InputStream):
             poller = document_analysis_client.begin_analyze_document("prebuilt-document", file)
         result = poller.result()
         
-        # Convert the result to JSON
-        extracted_data = {
-            "content": result.content,
-            "pages": len(result.pages),
-            "tables": [
-                {
-                    "row_count": table.row_count,
-                    "column_count": table.column_count,
-                    "cells": [
-                        {
-                            "text": cell.content,
-                            "row_index": cell.row_index,
-                            "column_index": cell.column_index
-                        } for cell in table.cells
-                    ]
-                } for table in result.tables
-            ],
-            "key_value_pairs": [
-                {
-                    "key": kv.key.content if kv.key else "",
-                    "value": kv.value.content if kv.value else ""
-                } for kv in result.key_value_pairs
-            ]
-        }
+        # SIMPLIFIED: Just extract the content as plain text
+        document_content = result.content
         
-        json_data = json.dumps(extracted_data)
-        
-        # Upload to processed-data container
-        file_name = os.path.basename(blob.name).replace('.pdf', '.json')
+        # Upload to processed-data container as plain text, not JSON
+        file_name = os.path.basename(blob.name).replace('.pdf', '.txt')
         container_name = "processed-data"
         create_container_if_not_exists(container_name)
         
@@ -88,9 +71,9 @@ def process_pdf(blob: func.InputStream):
             container=container_name,
             blob=file_name
         )
-        blob_client.upload_blob(json_data, overwrite=True)
+        blob_client.upload_blob(document_content, overwrite=True)
         
-        logging.info(f"PDF {blob.name} processed and JSON uploaded to {file_name}")
+        logging.info(f"PDF {blob.name} processed and content uploaded to {file_name}")
         
     except Exception as e:
         logging.error(f"Error processing PDF: {str(e)}")
@@ -99,18 +82,17 @@ def process_pdf(blob: func.InputStream):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-# Function 2: Process JSON with Azure OpenAI
 @app.function_name("AnalyzeWithOpenAI")
 @app.blob_trigger(arg_name="blob", 
-                 path="processed-data/{name}.json",
+                 path="processed-data/{name}.txt",
                  connection="AzureWebJobsStorage")
 def analyze_with_openai(blob: func.InputStream):
-    logging.info(f"Processing JSON with OpenAI: {blob.name}")
+    logging.info(f"Processing content with OpenAI: {blob.name}")
     
     try:
-        # Read the JSON content
-        json_content = blob.read().decode('utf-8')
-        data = json.loads(json_content)
+        # Read the text content directly (no JSON parsing)
+        document_content = blob.read().decode('utf-8')
+        logging.info(f"Successfully read document content, length: {len(document_content)} characters")
         
         # Create a prompt for GPT-4o mini
         system_prompt = """
@@ -128,30 +110,42 @@ def analyze_with_openai(blob: func.InputStream):
         }
         """
         
-        # Extract the text content from the document data
-        document_content = data.get("content", "")
+        # Use the proper API configuration for Azure OpenAI
+        api_key = os.environ["OPENAI_API_KEY"]
+        api_version = "2025-01-01"
+        deployment_name = "gpt-4o-mini"
         
-        # Add key-value pairs info if present
-        if "key_value_pairs" in data and data["key_value_pairs"]:
-            document_content += "\n\nKey-Value pairs found in the document:\n"
-            for kv in data["key_value_pairs"]:
-                document_content += f"{kv['key']}: {kv['value']}\n"
-        
-        # Create OpenAI client with the new API (v1.0.0+)
-        from openai import AzureOpenAI
-        
+        # IMPORTANT: The endpoint needs to include the deployment and operation in Azure OpenAI
+        azure_endpoint = "https://unitedcoachaih1164957527.cognitiveservices.azure.com"
+
+        # Log authentication details (securely)
+        logging.info(f"Using API key prefix: {api_key[:5]}...")
+        logging.info(f"Endpoint: {azure_endpoint}")
+        logging.info(f"API Version: {api_version}")
+        logging.info(f"Deployment: {deployment_name}")
+
+        # Initialize the Azure OpenAI client
         client = AzureOpenAI(
-            api_key=os.environ["OPENAI_API_KEY"],
-            api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_API_ENDPOINT"]
+            api_version=api_version,
+            azure_endpoint=azure_endpoint,
+            api_key=api_key,
         )
+
+        # Call OpenAI to analyze the content
+        logging.info(f"Sending request to OpenAI with model: {deployment}")
         
-        # Call OpenAI to analyze the content using the new API
+        # Send content for analysis, limiting if necessary for testing
+        content_limit = 4000 if len(document_content) > 4000 else len(document_content)
+        truncated_content = document_content[:content_limit]
+        if content_limit < len(document_content):
+            truncated_content += "...[content truncated for processing]"
+        
+        # This is where the error occurs - the model parameter should match your deployment name
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use deployment name here
+            model="gpt-4o-mini",  # This should match your deployment name exactly
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Analyze this document content:\n\n{document_content}"}
+                {"role": "user", "content": f"Analyze this document content:\n\n{truncated_content}"}
             ],
             temperature=0.3,
             max_tokens=4096
@@ -159,6 +153,7 @@ def analyze_with_openai(blob: func.InputStream):
         
         # Extract the response
         gpt_analysis = response.choices[0].message.content
+        logging.info(f"OpenAI response received, length: {len(gpt_analysis)} characters")
         
         # Ensure we have valid JSON
         try:
@@ -182,7 +177,10 @@ def analyze_with_openai(blob: func.InputStream):
             
             # Validate JSON
             json.loads(gpt_analysis)
-        except json.JSONDecodeError:
+            logging.info("Successfully validated JSON response")
+            
+        except json.JSONDecodeError as json_error:
+            logging.error(f"Error formatting OpenAI response as JSON: {str(json_error)}")
             # If not valid JSON, create a simple JSON structure
             analysis_output = {
                 "title": "Unknown Document",
@@ -195,7 +193,7 @@ def analyze_with_openai(blob: func.InputStream):
             gpt_analysis = json.dumps(analysis_output)
         
         # Upload to gpt-data container
-        file_name = os.path.basename(blob.name)
+        file_name = os.path.basename(blob.name).replace('.txt', '.json')
         container_name = "gpt-data"
         create_container_if_not_exists(container_name)
         
@@ -205,10 +203,12 @@ def analyze_with_openai(blob: func.InputStream):
         )
         blob_client.upload_blob(gpt_analysis, overwrite=True)
         
-        logging.info(f"JSON {blob.name} analyzed with OpenAI and results uploaded")
+        logging.info(f"Text {blob.name} analyzed with OpenAI and results uploaded to {container_name}/{file_name}")
         
     except Exception as e:
+        import traceback
         logging.error(f"Error processing with OpenAI: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
 
 # Function 3: Convert to Speech
 @app.function_name("ConvertToSpeech")
