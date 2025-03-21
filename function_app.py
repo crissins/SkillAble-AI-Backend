@@ -707,7 +707,7 @@ def create_braille_html(blob: func.InputStream):
         
         # Upload to braille-html container
         file_name = os.path.basename(blob.name).replace('.txt', '.html')
-        container_name = "braille-html"
+        container_name = "braille"
         create_container_if_not_exists(container_name)
         
         blob_client = blob_service_client.get_blob_client(
@@ -924,3 +924,5 @@ def create_container_if_not_exists(container_name):
         # Container doesn't exist, create it
         blob_service_client.create_container(container_name)
         logging.info(f"Created container: {container_name}")
+
+
