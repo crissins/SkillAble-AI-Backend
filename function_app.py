@@ -9,6 +9,8 @@ from azure.storage.blob import BlobServiceClient
 import azure.cognitiveservices.speech as speechsdk
 from openai import AzureOpenAI
 from dotenv import load_dotenv
+import re
+import time
 load_dotenv()
 
 # Initialize the Azure Function App
@@ -89,20 +91,29 @@ def analyze_with_openai(blob: func.InputStream):
         document_content = blob.read().decode('utf-8')
         logging.info(f"Successfully read document content, length: {len(document_content)} characters")
         
-        # Create a prompt for GPT-4o mini
+        # Create a prompt for GPT-4o mini with enhanced requirements
         system_prompt = """
-        You are an expert document analyzer. Your task is to:
-        1. Summarize the key information from the document
-        2. Extract important points, facts, and insights
-        3. Organize the information in a clear, structured way
+        You are an expert document analyzer for a service that helps job coaches who work with people with disabilities. Your task is to:
+
+        1. Thoroughly analyze the provided document and extract comprehensive information
+        2. Generate a detailed summary that captures all major points and their implications 
+        3. Create a separate speech-friendly version that is optimized for text-to-speech conversion
         4. Format your output as a JSON with the following structure:
+
         {
             "title": "Document title if found, or 'Unknown Document'",
-            "summary": "A concise summary of the document (100-200 words)",
+            "summary": "A detailed comprehensive summary of the document (400-600 words)",
+            "summarization_for_speech": "A conversational, easily listenable version that removes symbols, citations, and complex formatting. Use natural sentence structures, avoid acronyms when possible, and add appropriate pauses with commas and periods. (300-500 words)",
             "key_points": ["Point 1", "Point 2", "..."],
-            "entities": [{"name": "Entity name", "type": "Type of entity (person, organization, date, etc.)"}],
-            "sentiment": "Overall sentiment of the document (positive, negative, neutral)"
+            "entities": [{"name": "Entity name", "type": "Type of entity (person, organization, date, etc.)"}]
         }
+
+        For the speech summary:
+        - Avoid special characters, symbols, citations (like [1], [2]), and complex formatting
+        - Use natural, conversational language suitable for listening
+        - Spell out acronyms on first use
+        - Structure with short sentences and clear transitions
+        - Add appropriate pauses with commas and periods
         """
         
         # Use the API key from environment variables
@@ -144,7 +155,7 @@ def analyze_with_openai(blob: func.InputStream):
                 {"role": "user", "content": f"Analyze this document content:\n\n{truncated_content}"}
             ],
             temperature=0.3,
-            max_tokens=1000
+            max_tokens=1500  # Increased to accommodate larger summary
         )
         
         # Extract the response
@@ -164,27 +175,39 @@ def analyze_with_openai(blob: func.InputStream):
                     # Just extract the analysis without worrying about JSON format
                     analysis_output = {
                         "title": "Unknown Document",
-                        "summary": gpt_analysis[:200] + "...",
+                        "summary": gpt_analysis[:400] + "...",
+                        "summarization_for_speech": clean_text_for_speech(gpt_analysis[:300]),
                         "key_points": ["Automatic extraction failed"],
-                        "entities": [],
-                        "sentiment": "neutral"
+                        "entities": []
                     }
                     gpt_analysis = json.dumps(analysis_output)
             
-            # Validate JSON
-            json.loads(gpt_analysis)
+            # Parse the JSON to validate and ensure required fields
+            analysis_data = json.loads(gpt_analysis)
+            
+            # Ensure summarization_for_speech exists
+            if "summarization_for_speech" not in analysis_data:
+                # Create speech version from summary if missing
+                analysis_data["summarization_for_speech"] = clean_text_for_speech(analysis_data.get("summary", "No summary available"))
+            
+            # Remove sentiment if present (not needed in new format)
+            if "sentiment" in analysis_data:
+                del analysis_data["sentiment"]
+                
+            # Reserialize to JSON
+            gpt_analysis = json.dumps(analysis_data, indent=2)
             logging.info("Successfully validated JSON response")
             
         except json.JSONDecodeError as json_error:
             logging.error(f"Error formatting OpenAI response as JSON: {str(json_error)}")
-            # If not valid JSON, create a simple JSON structure
+            # If not valid JSON, create a simple JSON structure with speech-friendly text
             analysis_output = {
                 "title": "Unknown Document",
-                "summary": gpt_analysis[:200] + "...",
+                "summary": gpt_analysis[:400] + "...",
+                "summarization_for_speech": clean_text_for_speech(gpt_analysis[:300]),
                 "key_points": ["Automatic JSON formatting failed"],
                 "entities": [],
-                "sentiment": "neutral",
-                "raw_analysis": gpt_analysis
+                "raw_analysis": gpt_analysis[:1000]  # Truncated raw response
             }
             gpt_analysis = json.dumps(analysis_output)
         
@@ -206,6 +229,26 @@ def analyze_with_openai(blob: func.InputStream):
         logging.error(f"Error processing with OpenAI: {str(e)}")
         logging.error(f"Traceback: {traceback.format_exc()}")
 
+# Helper function to clean text for speech
+def clean_text_for_speech(text):
+    # Remove citations like [1], [2], etc.
+    text = re.sub(r'\[\d+\]', '', text)
+    
+    # Remove special characters that might cause issues with speech synthesis
+    text = re.sub(r'[^\w\s.,;:?!-]', '', text)
+    
+    # Replace multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Replace long dashes with commas for better speech flow
+    text = text.replace('—', ', ')
+    text = text.replace('--', ', ')
+    
+    # Replace newlines with periods for better speech synthesis
+    text = text.replace('\n', '. ').replace('. . ', '. ')
+    
+    return text.strip()
+
 # Function 3: Convert to Speech
 @app.function_name("ConvertToSpeech")
 @app.blob_trigger(arg_name="blob", 
@@ -219,26 +262,21 @@ def convert_to_speech(blob: func.InputStream):
         json_content = blob.read().decode('utf-8')
         analysis = json.loads(json_content)
         
-        # Extract the summary from the analysis
-        summary = analysis.get("summary", "No summary available.")
+        # Extract the speech-friendly summary from the analysis
+        # Use the dedicated speech field if available, otherwise fallback to regular summary
+        speech_text = analysis.get("summarization_for_speech", analysis.get("summary", "No summary available."))
         title = analysis.get("title", "Unknown Document")
         
         # Prepare text for speech synthesis
-        speech_text = f"Document Title: {title}. Summary: {summary}"
-        
-        # Add key points if available
-        key_points = analysis.get("key_points", [])
-        if key_points:
-            speech_text += " Key points: "
-            for i, point in enumerate(key_points):
-                speech_text += f" Point {i+1}: {point}."
+        speech_text = f"Document Title: {title}. {speech_text}"
         
         # Initialize speech synthesizer
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
         speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"  # You can change this to your preferred voice
         
-        # Create a temporary file for the audio output
-        temp_audio_file = tempfile.mktemp(suffix='.wav')
+        # Create a temporary file for the audio output with unique name
+        temp_file_name = f"speech_{int(time.time())}_{os.getpid()}"
+        temp_audio_file = tempfile.mktemp(prefix=temp_file_name, suffix='.wav')
         audio_config = speechsdk.audio.AudioOutputConfig(filename=temp_audio_file)
         
         # Create the speech synthesizer
@@ -249,7 +287,7 @@ def convert_to_speech(blob: func.InputStream):
         
         # Check the result
         if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            logging.info("Speech synthesis completed for text [{}]".format(speech_text))
+            logging.info("Speech synthesis completed")
             
             # Upload the audio file to the audio-data container
             file_name = os.path.basename(blob.name).replace('.json', '.wav')
@@ -258,11 +296,20 @@ def convert_to_speech(blob: func.InputStream):
             
             # Read the audio file and upload it
             with open(temp_audio_file, "rb") as audio_file:
-                blob_client = blob_service_client.get_blob_client(
-                    container=container_name,
-                    blob=file_name
-                )
-                blob_client.upload_blob(audio_file.read(), overwrite=True)
+                audio_data = audio_file.read()  # Read data first before closing file
+                
+            # Close the file before attempting to upload
+            # The file is now closed after exiting the with block
+            
+            # Add a small delay to ensure file is fully released
+            time.sleep(0.5)
+            
+            # Upload to blob storage
+            blob_client = blob_service_client.get_blob_client(
+                container=container_name,
+                blob=file_name
+            )
+            blob_client.upload_blob(audio_data, overwrite=True)
             
             logging.info(f"Audio file uploaded as {file_name}")
             
@@ -273,11 +320,28 @@ def convert_to_speech(blob: func.InputStream):
                 logging.error(f"Error details: {cancellation_details.error_details}")
     
     except Exception as e:
+        import traceback
         logging.error(f"Error converting to speech: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
     finally:
-        # Clean up the temporary audio file
+        # Safely remove the temporary audio file with retries
         if 'temp_audio_file' in locals() and os.path.exists(temp_audio_file):
-            os.remove(temp_audio_file)
+            try:
+                # Try multiple times to delete the file
+                max_attempts = 5
+                for attempt in range(max_attempts):
+                    try:
+                        os.remove(temp_audio_file)
+                        logging.info(f"Successfully removed temporary file on attempt {attempt+1}")
+                        break
+                    except PermissionError:
+                        if attempt < max_attempts - 1:
+                            logging.info(f"File still in use, waiting before retry {attempt+1}/{max_attempts}")
+                            time.sleep(1)  # Wait before trying again
+                        else:
+                            logging.warning(f"Could not remove temporary file {temp_audio_file} after {max_attempts} attempts")
+            except Exception as del_error:
+                logging.warning(f"Error while removing temporary file: {str(del_error)}")
 
 # Helper function to create a container if it doesn't exist
 def create_container_if_not_exists(container_name):
