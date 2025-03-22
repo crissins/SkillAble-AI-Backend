@@ -141,10 +141,10 @@ United Coach uses Azure Functions to create a serverless document processing pip
 
 ### Configuration
 
-1. Clone this repository
-2. Create a `.env` file with your Azure credentials:
+1. Clone this repository and create a `.env` file with your Azure credentials:
 
 ```
+AzureWebJobsStorage=your_connection_string_from_blob_storage
 DOCUMENT_INTELLIGENCE_ENDPOINT=your_endpoint
 DOCUMENT_INTELLIGENCE_KEY=your_key
 OPENAI_API_KEY=your_key
@@ -154,6 +154,9 @@ SPEECH_KEY=your_key
 SPEECH_REGION=your_region
 EMAIL_CONNECTION_STRING=your_connection_string
 EMAIL_SENDER=your_sender_email
+EMAIL_RECIPIENT = "the person you want to send the email to"
+FUNCTIONS_WORKER_RUNTIME="python"
+PYTHON_ENABLE_WORKER_EXTENSIONS="1"
 ```
 
 3. Start the Azure Function using Visual Studio or Azure CLI, you may deploy this into your portal:
