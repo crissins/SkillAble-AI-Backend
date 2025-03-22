@@ -796,16 +796,11 @@ def send_email_with_attachments(blob: func.InputStream):
             braille_content = "<html><body><p>Error retrieving Braille content.</p></body></html>"
         
         # Initialize Azure Communication Services Email client
-        connection_string = os.environ.get("COMMUNICATION_SERVICES_CONNECTION_STRING")
-        sender_email = os.environ.get("SENDER_EMAIL", "DoNotReply@8bf9b200-74da-4cd2-a7e3-20c344ee25b9.azurecomm.net")
-        recipient_email = os.environ.get("COACH_NOTIFICATION_EMAIL", "cristopherwin8@outlook.com")
+        connection_string = "endpoint=https://united-coach-emails.unitedstates.communication.azure.com/;accesskey=5hwvfNGipP2YudXJpkrA8a99vOURhThWq7uepbLvRsVdbDYfdK3sJQQJ99BCACULyCp2n9vXAAAAAZCScFNM"
+        sender_email = "DoNotReply@8bf9b200-74da-4cd2-a7e3-20c344ee25b9.azurecomm.net"
+        recipient_email = "cristopherwin8@outlook.com"
         
-        # Ensure the connection string is available
-        if not connection_string:
-            logging.error("Communication Services connection string is missing. Email cannot be sent.")
-            return
-        
-        # Create email client
+        # Create email client (simplified)
         email_client = EmailClient.from_connection_string(connection_string)
         
         # Enhance the email body with additional context
@@ -859,28 +854,26 @@ def send_email_with_attachments(blob: func.InputStream):
         
         # Format for Azure Communication Services
         message = {
+            "senderAddress": sender_email,
+            "recipients": {
+                "to": [{"address": recipient_email}]  # Simplified recipient format
+            },
             "content": {
                 "subject": email_subject,
                 "html": enhanced_email_body,
                 "plainText": f"Accessible Document: {document_title}\n\n{email_body}\n\nThis email contains two attachments:\n1. Audio file (.wav)\n2. Braille HTML file (.html)"
             },
-            "recipients": {
-                "to": [
-                    {
-                        "address": recipient_email,
-                        "displayName": "Job Coach"
-                    }
-                ]
-            },
-            "senderAddress": sender_email,
             "attachments": attachments
         }
         
-        # Send the email
-        poller = email_client.begin_send(message)
-        result = poller.result()
-        
-        logging.info(f"Email sent successfully. Message ID: {result.message_id}")
+        # Send using simplified error handling
+        try:
+            poller = email_client.begin_send(message)
+            result = poller.result()
+            logging.info(f"Email sent successfully. Message ID: {result.message_id}")
+        except Exception as e:
+            logging.error(f"Failed to send email: {str(e)}")
+            raise
         
         # Mark the email as sent by creating a flag file in a new container
         container_name = "email-sent-flags"
@@ -924,5 +917,3 @@ def create_container_if_not_exists(container_name):
         # Container doesn't exist, create it
         blob_service_client.create_container(container_name)
         logging.info(f"Created container: {container_name}")
-
-
