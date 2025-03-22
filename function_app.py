@@ -641,7 +641,7 @@ def create_braille_html(blob: func.InputStream):
             braille_text += braille_dict.get(char, char)  # Use original char if not in dictionary
         
         # Limit document length if too large (Braille can take up a lot of space)
-        max_length = 5000  # Reasonable limit for Braille display
+        max_length = 40000
         if len(document_content) > max_length:
             document_content = document_content[:max_length] + "...[content truncated for display]"
             braille_text = braille_text[:max_length*2] + "..."  # Braille may have expansion factors
