@@ -1,6 +1,6 @@
 # United Coach: AI-Powered Document Accessibility for Job Coaches
 
-## Innovation Challenge Winner - March 2025
+## Innovation Challenge - March 2025
 
 ![United Coach Workflow](arch.png)
 
