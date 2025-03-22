@@ -141,7 +141,8 @@ United Coach uses Azure Functions to create a serverless document processing pip
 
 ### Configuration
 
-1. Clone this repository and create a `.env` file with your Azure credentials:
+1. Clone this repository
+v2. Create a `.env` file with your Azure credentials:
 
 ```
 AzureWebJobsStorage=your_connection_string_from_blob_storage
