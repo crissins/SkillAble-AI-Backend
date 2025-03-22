@@ -86,13 +86,17 @@ United Coach leverages several Azure AI services, carefully implemented with res
    - Enables rapid iteration and updates of AI processes directly from indexed files.
    - Provides seamless interoperability with other Azure AI services for end-to-end accessibility workflows.
 
+6. **Blob Storage**
 
-Our implementation follows Microsoft's Responsible AI principles by:
-- Ensuring human oversight through job coach review
-- Prioritizing inclusion through multiple accessible formats
-- Maintaining transparency about AI-generated content
-- Protecting privacy through secure processing and delivery
-- Focusing on empowerment rather than replacement of human coaches
+   For detailed instructions on setting up and configuring blob storage, please refer to the [blob-storage-setup.md](./blob-storage-setup.md) file located in the root directory.
+
+
+   Our implementation follows Microsoft's Responsible AI principles by:
+   - Ensuring human oversight through job coach review
+   - Prioritizing inclusion through multiple accessible formats
+   - Maintaining transparency about AI-generated content
+   - Protecting privacy through secure processing and delivery
+   - Focusing on empowerment rather than replacement of human coaches
 
 ## Technical Architecture
 
@@ -152,15 +156,15 @@ EMAIL_CONNECTION_STRING=your_connection_string
 EMAIL_SENDER=your_sender_email
 ```
 
-3. Deploy the Azure Functions app using Visual Studio or Azure CLI:
+3. Start the Azure Function using Visual Studio or Azure CLI, you may deploy this into your portal:
 
 ```bash
-az functionapp deploy --resource-group MyResourceGroup --name MyFunctionApp --src-path .
+func start --verbose.
 ```
 
 ### Usage
 
-1. Upload PDF documents to the `pdfs` container in your Azure Storage account
+1. Upload PDF documents to the `pdfs` container in your Azure Storage account using the frontend or directly upload into the container
 2. The system will automatically process the document and create:
    - Text extraction in `processed-data` container
    - AI analysis in `gpt-data` container
