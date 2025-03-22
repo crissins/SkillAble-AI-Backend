@@ -1,4 +1,4 @@
-# United Coach: AI-Powered Document Accessibility for Job Coaches
+# Skillable AI: AI-Powered Document Accessibility for Job Coaches
 
 ## Innovation Challenge - March 2025
 
