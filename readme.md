@@ -4,6 +4,10 @@
 
 ![United Coach Workflow](arch.png)
 
+## Demo Video
+
+[![Skillable AI Demo](thumbnail.png)](https://www.youtube.com/watch?v=2T4q4yEDV_A&t=2s&ab_channel=CrisOlivares)
+
 ## Our Story: Breaking Barriers Through Accessible Training
 
 In a world where workplace training materials remain largely inaccessible to people with visual impairments, United Coach emerged as a transformative solution. Our journey began when we recognized a critical gap: job coaches supporting visually impaired clients were spending countless hours manually converting standard training documents into accessible formats, leaving less time for personalized coaching.
@@ -56,7 +60,7 @@ United Coach is an AI-powered document processing system that automatically tran
 
 ## Azure AI Services & Responsible AI Implementation
 
-United Coach leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:
+United Coach leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:   
 
 1. **Azure Document Intelligence**
    - Extracts text content while preserving document structure
@@ -142,7 +146,7 @@ United Coach uses Azure Functions to create a serverless document processing pip
 ### Configuration
 
 1. Clone this repository
-v2. Create a `.env` file with your Azure credentials:
+2. Create a `.env` file with your Azure credentials:
 
 ```
 AzureWebJobsStorage=your_connection_string_from_blob_storage
@@ -245,6 +249,19 @@ To start the front end, follow these steps:
    ```
 
 Your front-end application should now be running in the browser.
+
+## Additional Resources
+
+* [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+* [Azure Document Intelligence Documentation](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/)
+* [Azure Speech Service Documentation](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/)
+* [Azure Communication Services Documentation](https://learn.microsoft.com/en-us/azure/communication-services/)
+* [Azure AI Search Documentation](https://learn.microsoft.com/en-us/azure/search/)
+* [Azure Blob Storage Documentation](https://learn.microsoft.com/en-us/azure/storage/blobs/)
+* [Azure Functions Documentation](https://learn.microsoft.com/en-us/azure/azure-functions/)
+* [React Documentation](https://react.dev/learn)
+* [Azure Web Apps Documentation](https://learn.microsoft.com/en-us/azure/app-service/)
+* [Microsoft Responsible AI Principles](https://www.microsoft.com/en-us/ai/responsible-ai)
 
 ## Our Team
 
