@@ -79,6 +79,14 @@ United Coach leverages several Azure AI services, carefully implemented with res
    - Maintains confidentiality of sensitive employment information
    - Provides transparent error reporting and delivery confirmation
 
+5. **Azure AI search**
+   - Integrates with Azure AI Search to index and retrieve ingested files for efficient processing.
+   - Orchestrates AI workflows by dynamically deploying processing pipelines on source documents.
+   - Leverages pre-built models and dynamic scaling to optimize analysis of complex document data.
+   - Enables rapid iteration and updates of AI processes directly from indexed files.
+   - Provides seamless interoperability with other Azure AI services for end-to-end accessibility workflows.
+
+
 Our implementation follows Microsoft's Responsible AI principles by:
 - Ensuring human oversight through job coach review
 - Prioritizing inclusion through multiple accessible formats
@@ -192,6 +200,43 @@ To debug if emails are being sent correctly and to verify sender/receiver inform
 - Multi-language support for diverse communities
 - Mobile application for on-the-go document processing
 - Integration with employer HR systems for streamlined onboarding
+
+## Front-End Setup
+
+To start the front end, follow these steps:
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/mari-blooming/SkillAble-AI-Frontend.git
+   ```
+
+2. Navigate into the repository directory:
+   ```
+   cd SkillAble-AI-Frontend
+   ```
+
+3. Create a `.env` file in the root directory and add the required environment variables:
+   ```
+   REACT_APP_STORAGE_URL=https://united0coach0storage.blob.core.windows.net/
+   REACT_APP_CONTAINER_NAME=pdfs
+   REACT_APP_SAS_TOKEN=?sp=racw&st=2025-03-21T03:24:36Z&se=2025-03-28T11:24:36Z&spr=https&sv=2024-11-04&sr=c&sig=your_api_key
+   REACT_APP_AZURE_AI_ENDPOINT=https://united-coach-openai.openai.azure.com/
+   REACT_APP_AZURE_AI_KEY=your_api_key
+   REACT_APP_AZURE_DEPLOYMENT_NAME=gpt-4o-mini
+   REACT_APP_OPENAI_API_KEY=your_api_key
+   ```
+
+4. Install dependencies:
+   ```
+   npm install
+   ```
+
+5. Start the development server:
+   ```
+   npm start
+   ```
+
+Your front-end application should now be running in the browser.
 
 ## Our Team
 
