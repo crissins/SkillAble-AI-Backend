@@ -2,7 +2,7 @@
 
 ## Innovation Challenge - March 2025
 
-![United Coach Workflow](arch.png)
+![Skillable AI Skillable AI Workflow](arch.png)
 
 ## Demo Video
 
@@ -10,11 +10,11 @@
 
 ## Our Story: Breaking Barriers Through Accessible Training
 
-In a world where workplace training materials remain largely inaccessible to people with visual impairments, United Coach emerged as a transformative solution. Our journey began when we recognized a critical gap: job coaches supporting visually impaired clients were spending countless hours manually converting standard training documents into accessible formats, leaving less time for personalized coaching.
+In a world where workplace training materials remain largely inaccessible to people with visual impairments, Skillable AI emerged as a transformative solution. Our journey began when we recognized a critical gap: job coaches supporting visually impaired clients were spending countless hours manually converting standard training documents into accessible formats, leaving less time for personalized coaching.
 
 **The breakthrough moment came when we asked:** What if we could use AI to automatically transform any employment document into both braille and audio formats, while preserving the context and nuance that makes job training effective?
 
-United Coach now empowers job coaches to upload any standard training document and receive fully accessible versions within minutes. For a person who is blind or visually impaired, this means:
+Skillable AI now empowers job coaches to upload any standard training document and receive fully accessible versions within minutes. For a person who is blind or visually impaired, this means:
 
 - Hearing complex workplace procedures through natural-sounding voice narration optimized for comprehension
 - Reading employment materials through braille-formatted documents that maintain the structure and meaning of the original content
@@ -41,7 +41,7 @@ However, job coaches face significant challenges:
 
 ## Our Solution
 
-United Coach is an AI-powered document processing system that automatically transforms standard employment materials into accessible formats customized for different learning needs. The solution helps job coaches save time and better serve their clients by:
+Skillable AI is an AI-powered document processing system that automatically transforms standard employment materials into accessible formats customized for different learning needs. The solution helps job coaches save time and better serve their clients by:
 
 1. **Converting standard training materials into accessible formats**
    - Audio versions for audio learners or those with visual impairments
@@ -60,7 +60,7 @@ United Coach is an AI-powered document processing system that automatically tran
 
 ## Azure AI Services & Responsible AI Implementation
 
-United Coach leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:   
+Skillable AI Skillable AI leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:   
 
 1. **Azure Document Intelligence**
    - Extracts text content while preserving document structure
@@ -104,7 +104,7 @@ United Coach leverages several Azure AI services, carefully implemented with res
 
 ## Technical Architecture
 
-United Coach uses Azure Functions to create a serverless document processing pipeline:
+Skillable AI Skillable AI uses Azure Functions to create a serverless document processing pipeline:
 
 1. **Document Intake**
    - PDF uploads trigger the processing workflow
