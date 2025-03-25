@@ -60,7 +60,7 @@ Skillable AI is an AI-powered document processing system that automatically tran
 
 ## Azure AI Services & Responsible AI Implementation
 
-Skillable AI Skillable AI leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:   
+Skillable AI leverages several Azure AI services, carefully implemented with responsible AI principles at the forefront:   
 
 1. **Azure Document Intelligence**
    - Extracts text content while preserving document structure
@@ -104,7 +104,7 @@ Skillable AI Skillable AI leverages several Azure AI services, carefully impleme
 
 ## Technical Architecture
 
-Skillable AI Skillable AI uses Azure Functions to create a serverless document processing pipeline:
+Skillable AI uses Azure Functions to create a serverless document processing pipeline:
 
 1. **Document Intake**
    - PDF uploads trigger the processing workflow
